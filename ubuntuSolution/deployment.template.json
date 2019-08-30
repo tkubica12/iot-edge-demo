@@ -1,0 +1,103 @@
+{
+  "modulesContent": {
+    "$edgeAgent": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "runtime": {
+          "type": "docker",
+          "settings": {
+            "minDockerVersion": "v1.25",
+            "loggingOptions": "",
+            "registryCredentials": {
+              "iotedgemojemoduly": {
+                "username": "$CONTAINER_REGISTRY_USERNAME_iotedgemojemoduly",
+                "password": "$CONTAINER_REGISTRY_PASSWORD_iotedgemojemoduly",
+                "address": "iotedgemojemoduly.azurecr.io"
+              }
+            }
+          }
+        },
+        "systemModules": {
+          "edgeAgent": {
+            "type": "docker",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-agent:1.0",
+              "createOptions": ""
+            }
+          },
+          "edgeHub": {
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-hub:1.0",
+              "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}], \"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]}}}"
+            }
+          }
+        },
+        "modules": {
+          "tempSensor": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-simulated-temperature-sensor:1.0",
+              "createOptions": ""
+            }
+          },
+          "configModule": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.configModule.amd64}",
+              "createOptions": ""
+            }
+          },
+          "transformModule": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.transformModule.amd64}",
+              "createOptions": ""
+            }
+          },
+          "aggregateModule": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "microsoft/azureiotedge-azure-stream-analytics:1.0.0-preview010",
+              "createOptions": ""
+            }
+          }
+        }
+      }
+    },
+    "$edgeHub": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "routes": {
+          "sensorTotransformModule": "FROM /messages/modules/tempSensor/outputs/temperatureOutput INTO BrokeredEndpoint(\"/modules/transformModule/inputs/input1\")",
+          "transformModuleToaggregateModule": "FROM /messages/modules/transformModule/outputs/* INTO BrokeredEndpoint(\"/modules/aggregateModule/inputs/input\")",
+          "aggregateModuleToIoTHub": "FROM /messages/modules/aggregateModule/outputs/output INTO $upstream"
+        },
+        "storeAndForwardConfiguration": {
+          "timeToLiveSecs": 7200
+        }
+      }
+    },
+    "aggregateModule": {
+      "properties.desired": {
+        "ASAJobInfo": "https://tomuvstore.blob.core.windows.net/iotedge/ASAEdgeJobs/a6b62500-0037-454e-a9a5-f6d6a5ca746a/b3f1e49f-92b7-467c-9787-10bb5125f7a9/ASAEdgeJobDefinition.zip?sv=2017-04-17&sr=b&sig=cJmcQTA%2BCUEa%2BTJ2Spdk6%2B4yNCKnYCf%2B5nvJeanK4bI%3D&st=2018-08-27T03%3A39%3A46Z&se=2021-08-27T03%3A49%3A46Z&sp=r",
+        "ASAJobResourceId": "/subscriptions/a0f4a733-4fce-4d49-b8a8-d30541fc1b45/resourceGroups/iot-edge/providers/Microsoft.StreamAnalytics/streamingjobs/mujedgestream",
+        "ASAJobEtag": "05960558-c597-494b-9ad7-8a7f60d0b20a"
+      }
+    }
+  }
+}
